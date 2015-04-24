@@ -627,11 +627,11 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         # Ask for confirmation.
         if singleton:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
-                    'Enter search', 'enter Id', 'aBort')
+                    'apply with Overrides', 'Enter search', 'enter Id', 'aBort')
         else:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
-                    'as Tracks', 'Group albums', 'Enter search', 'enter Id',
-                    'aBort')
+                    'apply with Overrides', 'as Tracks', 'Group albums',
+                    'Enter search', 'enter Id', 'aBort')
         default = config['import']['default_action'].as_choice({
             'apply': 'a',
             'skip': 's',
@@ -643,6 +643,11 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         sel = ui.input_options(opts, require=require, default=default)
         if sel == 'a':
             return match
+        elif sel == 'o':
+            print_("Override matched album title \"%s\"." % match.info.album)
+            print_("WARNING: No input validation performed. Be careful!")
+            match.info.album = ui.input_("Enter replacement album title:")
+            bypass_candidates = True
         elif sel == 'g':
             return importer.action.ALBUMS
         elif sel == 's':
@@ -813,7 +818,8 @@ class TerminalImportSession(importer.ImportSession):
             ))
 
             sel = ui.input_options(
-                ('Skip new', 'Keep both', 'Remove old')
+                ('Skip new', 'Keep both', 'Remove old',
+                'keep both but Override new')
             )
 
         if sel == 's':
@@ -825,6 +831,11 @@ class TerminalImportSession(importer.ImportSession):
         elif sel == 'r':
             # Remove old.
             task.should_remove_duplicates = True
+        elif sel == 'o':
+            # Keep both, override new.
+            print_("Override album title \"%s\"." % task.match.info.album)
+            print_("WARNING: No input validation performed. Be careful!")
+            task.match.info.album = ui.input_("Enter replacement album title:")
         else:
             assert False
 
